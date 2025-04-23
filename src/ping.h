@@ -23,4 +23,5 @@ typedef struct {
 } Params;
 
 void parse_params(Params *params, int argc, char **argv);
+void resolve_dns(Params *params);
 #endif
