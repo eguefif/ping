@@ -22,7 +22,7 @@ typedef struct {
     boolean target_type;
     char *host;
     char *ip;
-    struct addrinfo *dns_results;
+    struct addrinfo dns_result;
 
 } Params;
 
