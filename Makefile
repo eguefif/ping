@@ -1,7 +1,5 @@
-
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -O2 -Isrc
-LDFLAGS =
+CFLAGS = -Wall -Wextra -O2
 
 SRC_DIR := src
 SRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -10,6 +8,7 @@ OBJS := $(SRCS:$(SRC_DIR)/%.c=%.o)
 TARGET = ping
 
 all: $(TARGET)
+
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
@@ -21,3 +20,5 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all clean
+run:
+	./ping www.google.com
