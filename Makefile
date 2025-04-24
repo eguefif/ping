@@ -20,3 +20,5 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 
 .PHONY: all clean
+run:
+	./ping www.google.com

@@ -1,16 +1,14 @@
 #include "ping.h"
 
 struct addrinfo *get_addr_info(char *host);
-int process_result(struct addrinfo *result, char *host);
+void display_result(struct addrinfo *result, char *host);
 
 void resolve_dns(Params *params) {
     struct addrinfo *result;
 
     result = get_addr_info(params->host);
-    int choice = process_result(result, params->host);
-
-    memcpy(&params->dns_result, &result[choice], sizeof(struct addrinfo));
-    freeaddrinfo(result);
+    display_result(result, params->host);
+    params->dns_result = result;
 }
 
 struct addrinfo *get_addr_info(char *host) {
@@ -34,7 +32,7 @@ struct addrinfo *get_addr_info(char *host) {
     return result;
 }
 
-int process_result(struct addrinfo *result, char *host) {
+void display_result(struct addrinfo *result, char *host) {
     struct addrinfo *tmp;
     void *addr;
     char *ip_version;
@@ -59,14 +57,4 @@ int process_result(struct addrinfo *result, char *host) {
         inet_ntop(tmp->ai_family, addr, addr_ip, sizeof addr_ip);
         printf("%d => %s(%s)\n", i, addr_ip, ip_version);
     }
-    int choice = 0;
-    if (i > 1) {
-        printf("What ip address do you choose: ");
-        while (scanf("%d", &choice) != 1) {
-            int ch;
-            while ((ch = getchar()) != '\n' && ch != EOF)
-                ;
-        }
-    }
-    return choice;
 }
