@@ -1,26 +1,43 @@
 #include "ping.h"
 
+struct addrinfo *get_addr_info(char *host);
+void process_result(struct addrinfo *result, char *host);
+
 void resolve_dns(Params *params) {
+    struct addrinfo *result;
+
+    result = get_addr_info(params->host);
+    process_result(result, params->host);
+
+    params->dns_results = result;
+}
+
+struct addrinfo *get_addr_info(char *host) {
     struct addrinfo hints;
     struct addrinfo *result;
-    struct addrinfo *tmp;
     int error;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_RAW;
-    if ((error = getaddrinfo(params->host, NULL, &hints, &result)) != 0) {
+    if ((error = getaddrinfo(host, NULL, &hints, &result)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
         exit(EXIT_FAILURE);
     }
 
     if (result == NULL) {
         fprintf(stdout, "DNS resolution failed: no result\n");
-        return;
+        exit(EXIT_FAILURE);
     }
 
-    printf("The '%s' domain name resolves to:\n", params->host);
-    for (tmp = result; tmp != NULL; tmp = result->ai_next) {
+    return result;
+}
+
+void process_result(struct addrinfo *result, char *host) {
+    struct addrinfo *tmp;
+
+    printf("The '%s' domain name resolves to:\n", host);
+    for (tmp = result; tmp != NULL; tmp = tmp->ai_next) {
         void *addr;
 
         struct sockaddr_in *ipv4 = (struct sockaddr_in *)tmp->ai_addr;
@@ -30,5 +47,4 @@ void resolve_dns(Params *params) {
         inet_ntop(tmp->ai_family, addr, addr_ip, sizeof addr_ip);
         printf("=> %s\n", addr_ip);
     }
-    params->dns_results = result;
 }
