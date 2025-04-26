@@ -21,4 +21,4 @@ clean:
 
 .PHONY: all clean
 run:
-	./ping www.google.com
+	./ping 192.168.2.1
