@@ -30,6 +30,6 @@ typedef struct {
 
 void parse_params(Params *params, int argc, char **argv);
 struct sockaddr_in resolve_dns(Params *params);
-void send_ping(struct sockaddr_in addr);
+void run_ping(struct sockaddr_in addr);
 
 #endif

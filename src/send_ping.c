@@ -1,55 +1,41 @@
 #include "ping.h"
 #define PING_RATE 1000000
 #define RECV_TIMEOUT 1
-#define BUFF_SIZE 64000
+#define BUFF_SIZE 1000
+#define PING_SIZE 64
 
 typedef struct {
     struct icmphdr header;
-    char message[64 - sizeof(struct icmphdr)];
+    char message[PING_SIZE - sizeof(struct icmphdr)];
 } Packet;
 
 uint16_t calculate_checksum(void *packet);
+Packet init_packet(int seq);
 int init_socket();
-Packet init_packet();
 void print_buffer(char *buffer, int n);
+void send_ping(int sockfd, struct sockaddr_in addr, int seq);
+boolean handle_response(int sockfd);
+void display_ping_message(int seq);
 
-void send_ping(struct sockaddr_in addr) {
-    Packet packet;
-    char buffer[BUFF_SIZE];
-
+void run_ping(struct sockaddr_in addr) {
     int sockfd = init_socket();
+    int seq = 1;
 
-    usleep(PING_RATE);
-
-    packet = init_packet();
-    if (sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
-               sizeof(addr)) == -1) {
-        fprintf(stderr, "Error: failed to send packet\n");
-        exit(EXIT_FAILURE);
-    }
-
-    struct sockaddr r_addr;
-    socklen_t r_addr_len = sizeof(r_addr);
-    int n = recvfrom(sockfd, buffer, BUFF_SIZE, 0, (struct sockaddr *)&r_addr,
-                     &r_addr_len);
-    if (n > 1) {
-        struct iphdr *ip = (struct iphdr *)buffer;
-        struct icmphdr *hdr = (struct icmphdr *)buffer + ip->ihl * 4;
-        printf("Packet received with ICMP type %d, code %d\n", hdr->type,
-               hdr->code);
-    } else {
-        fprintf(stderr, "Error: receiving failed\n");
+    while (true) {
+        usleep(PING_RATE);
+        send_ping(sockfd, addr, seq);
+        if (handle_response(sockfd)) {
+            display_ping_message(seq);
+        } else {
+            fprintf(stderr, "Error: wrong response format\n");
+        }
+        seq++;
     }
 }
 
-void print_buffer(char *buffer, int n) {
-    for (int i = 0; i < n; i++) {
-        printf("%2X ", buffer[i]);
-        if (i % 8 == 0 && i > 0) {
-            printf("\n");
-        }
-    }
-    printf("\n\n");
+void display_ping_message(int seq) {
+    printf("%d bytes from ADDR(addr): icmp_seq=%d, ttcl=64, time=%d ms\n", 64,
+           seq, 0);
 }
 
 int init_socket() {
@@ -79,15 +65,28 @@ int init_socket() {
     return sockfd;
 }
 
-Packet init_packet() {
-    static int seqnum = 0;
+void send_ping(int sockfd, struct sockaddr_in addr, int seq) {
+    Packet packet;
+    packet = init_packet(seq);
+    if (sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
+               sizeof(addr)) == -1) {
+        fprintf(stderr, "Error: failed to send packet\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+Packet init_packet(int seq) {
     Packet packet;
 
     bzero(&packet, sizeof(Packet));
     packet.header.type = ICMP_ECHO;
-    packet.header.un.echo.sequence = getpid();
-    packet.header.un.echo.sequence = seqnum;
+    packet.header.un.echo.id = getpid();
+    packet.header.un.echo.sequence = seq;
     packet.header.checksum = calculate_checksum(&packet);
+
+    for (int i = 0; i < 10; i++) {
+        packet.message[i] = (char)i + 33;
+    }
 
     return packet;
 }
@@ -107,4 +106,22 @@ uint16_t calculate_checksum(void *packet) {
     sum += (sum >> 16);
 
     return ~sum;
+}
+
+boolean handle_response(int sockfd) {
+    char buffer[BUFF_SIZE];
+
+    int n = recv(sockfd, buffer, BUFF_SIZE, 0);
+    if (n > 1) {
+        struct iphdr *ip = (struct iphdr *)buffer;
+        struct icmphdr *icmp = (struct icmphdr *)(buffer + ip->ihl * 4);
+        if (icmp->type == 0 && icmp->code == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        fprintf(stderr, "Ping timeout\n");
+    }
+    return false;
 }
