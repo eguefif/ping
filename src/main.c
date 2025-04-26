@@ -20,7 +20,10 @@ int main(int argc, char **argv) {
 struct sockaddr_in get_sockaddrin(char *ip) {
     struct sockaddr_in addr;
 
-    if (inet_pton(AF_INET, ip, &addr) != 1) {
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(0);
+
+    if (inet_pton(AF_INET, ip, &(addr.sin_addr)) != 1) {
         fprintf(stderr, "Error: ip addres wrong format %s", ip);
         exit(EXIT_FAILURE);
     }
