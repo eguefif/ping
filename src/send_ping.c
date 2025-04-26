@@ -9,37 +9,56 @@ typedef struct {
 } Packet;
 
 uint16_t calculate_checksum(void *packet);
-int init_socket(struct sockaddr *target);
+int init_socket();
 Packet init_packet();
+void print_buffer(char *buffer, int n);
 
 void send_ping(struct sockaddr_in addr) {
     Packet packet;
     char buffer[BUFF_SIZE];
 
-    int sockfd = init_socket((struct sockaddr *)&addr);
+    int sockfd = init_socket();
 
     usleep(PING_RATE);
 
     packet = init_packet();
-    write(1, &"BEFORE\n", 6);
-    sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
-           sizeof(struct sockaddr_in));
+    if (sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
+               sizeof(addr)) == -1) {
+        fprintf(stderr, "Error: failed to send packet\n");
+        exit(EXIT_FAILURE);
+    }
 
-    write(1, &"TEST\n", 5);
-    int n = recv(sockfd, buffer, BUFF_SIZE, 0);
+    struct sockaddr r_addr;
+    socklen_t r_addr_len = sizeof(r_addr);
+    int n = recvfrom(sockfd, buffer, BUFF_SIZE, 0, (struct sockaddr *)&r_addr,
+                     &r_addr_len);
     if (n > 1) {
-        struct icmphdr *hdr = (struct icmphdr *)buffer;
+        struct iphdr *ip = (struct iphdr *)buffer;
+        struct icmphdr *hdr = (struct icmphdr *)buffer + ip->ihl * 4;
         printf("Packet received with ICMP type %d, code %d\n", hdr->type,
                hdr->code);
+    } else {
+        fprintf(stderr, "Error: receiving failed\n");
     }
 }
 
-int init_socket(struct sockaddr *target) {
+void print_buffer(char *buffer, int n) {
+    for (int i = 0; i < n; i++) {
+        printf("%2X ", buffer[i]);
+        if (i % 8 == 0 && i > 0) {
+            printf("\n");
+        }
+    }
+    printf("\n\n");
+}
+
+int init_socket() {
     struct timeval timeout;
 
     int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-    if (connect(sockfd, target, sizeof(struct sockaddr)) == -1) {
-        fprintf(stderr, "Error: impossible to connect socket\n");
+    if (sockfd < 0) {
+        fprintf(stderr, "Error: socket not created\n");
+        exit(EXIT_FAILURE);
     }
 
     int ttl = 64;
