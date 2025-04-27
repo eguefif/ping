@@ -9,6 +9,7 @@ void parse_params(Params *params, char **argv, int argc) {
         if (strncmp(argv[i], "-v", 2) == 0) {
             params->verbose = true;
         } else {
+            params->target = argv[i];
             parse_target(argv[i], params);
         }
     }

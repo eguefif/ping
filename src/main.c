@@ -7,4 +7,5 @@ int main(int argc, char **argv) {
     Params params;
     parse_params(&params, argv, argc);
     run_ping(params);
+    return 0;
 }

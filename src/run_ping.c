@@ -22,20 +22,38 @@ void signalHandler();
 void run_ping(Params params) {
     int sockfd = init_socket();
     int seq = 1;
+    Stats stats;
+    struct timeval before, after;
+    long double elapsed = 0;
+    boolean success = true;
 
+    bzero(&stats, sizeof(Stats));
     signal(SIGINT, signalHandler);
 
     while (running) {
         usleep(PING_RATE);
+        if (gettimeofday(&before, NULL) != 0) {
+            fprintf(stderr, "Error: impossible to get time\n");
+            exit(EXIT_FAILURE);
+        }
         send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
-            display_ping_message(seq, &params);
+            if (gettimeofday(&after, NULL) != 0) {
+                fprintf(stderr, "Error: impossible to get time: %s\n",
+                        strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+            elapsed = subtract_time(after, before);
+            display_ping_message(seq, &params, elapsed);
+            success = true;
         } else {
-            fprintf(stderr, "Error: wrong response format\n");
+            success = true;
+            display_unreachable(seq, &params);
         }
+        gather_statistics(&stats, elapsed, success);
         seq++;
     }
-    display_stat(&params);
+    display_stat(&params, stats);
 }
 
 void signalHandler() { running = false; }
