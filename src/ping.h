@@ -32,7 +32,7 @@ typedef struct {
     int count;
     int success_count;
     unsigned long acc;
-    unsigned long acc2;
+    long long acc2;
     unsigned long min;
     unsigned long max;
 } Stats;

@@ -3,7 +3,7 @@
 void gather_statistics(Stats *stats, unsigned long elapsed, boolean success) {
 
     stats->acc += elapsed;
-    stats->acc2 += elapsed * elapsed;
+    stats->acc2 += (long long)elapsed * (long long)elapsed;
 
     if (stats->min > elapsed || stats->min == 0) {
         stats->min = elapsed;
@@ -26,4 +26,4 @@ unsigned long subtract_time(struct timeval after, struct timeval before) {
     return total_after - total_before;
 }
 
-double to_ms(unsigned long elapsed) { return (long double)elapsed / 1000; }
+double to_ms(unsigned long elapsed) { return (double)elapsed / 1000; }

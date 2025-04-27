@@ -47,7 +47,7 @@ void run_ping(Params params) {
             display_ping_message(seq, &params, elapsed);
             success = true;
         } else {
-            success = true;
+            success = false;
             display_unreachable(seq, &params);
         }
         gather_statistics(&stats, elapsed, success);

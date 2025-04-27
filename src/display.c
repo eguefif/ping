@@ -30,8 +30,8 @@ double get_avg(Stats stats) {
 }
 
 double get_mdev(Stats stats) {
-    double t1 = to_ms(stats.acc) / (double)stats.count;
-    double t2 = to_ms(stats.acc2) / (double)stats.count;
+    long double t1 = stats.acc / (long double)stats.count;
+    long double t2 = stats.acc2 / (long double)stats.count;
 
-    return sqrt(t2 - t1 * t1);
+    return to_ms(sqrtl(t2 - t1 * t1));
 }
