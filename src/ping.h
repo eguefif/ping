@@ -24,5 +24,6 @@ typedef struct {
 void parse_params(Params *params, char **argv);
 struct sockaddr_in resolve_dns(Params *params);
 void run_ping(Params params);
+char *reverse_resolve_dns(struct sockaddr *addr, char *ip);
 
 #endif

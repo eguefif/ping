@@ -15,7 +15,7 @@ int init_socket();
 void print_buffer(char *buffer, int n);
 void send_ping(int sockfd, struct sockaddr *addr, int seq);
 boolean handle_response(int sockfd);
-void display_ping_message(int seq);
+void display_ping_message(int seq, Params *params);
 
 void run_ping(Params params) {
     int sockfd = init_socket();
@@ -25,7 +25,7 @@ void run_ping(Params params) {
         usleep(PING_RATE);
         send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
-            display_ping_message(seq);
+            display_ping_message(seq, &params);
         } else {
             fprintf(stderr, "Error: wrong response format\n");
         }
@@ -33,9 +33,9 @@ void run_ping(Params params) {
     }
 }
 
-void display_ping_message(int seq) {
-    printf("%d bytes from ADDR(addr): icmp_seq=%d, ttcl=64, time=%d ms\n", 64,
-           seq, 0);
+void display_ping_message(int seq, Params *params) {
+    printf("%d bytes from %s(%s): icmp_seq=%d, ttcl=64, time=%d ms\n", 64,
+           params->host, params->ip, seq, 0);
 }
 
 int init_socket() {
