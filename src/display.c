@@ -4,7 +4,7 @@ double get_avg(Stats stats);
 double get_mdev(Stats stats);
 
 void display_ping_message(int seq, Params *params, unsigned long elapsed) {
-    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%2.lf ms\n", 64,
+    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%2.0lf ms\n", 64,
            params->host, params->ip, seq, TTL, to_ms(elapsed));
 }
 
@@ -15,11 +15,11 @@ void display_unreachable(int seq, Params *params) {
 
 void display_stat(Params *params, Stats stats) {
     printf("--- %s ping statistics---\n", params->target);
-    printf("%d packets transmitted, %d received, %2.2lf%% packet loss, time "
+    printf("%d packets transmitted, %d received, %2.0lf%% packet loss, time "
            "%dms\n",
            stats.count, stats.success_count,
            100 - (double)(((double)stats.success_count / (double)stats.count) *
-                          100),
+                          subtract_time(stats.end, stats.start)),
            0);
     printf("rtt min/avg/max/mdev = %3.2lf/%3.2lf/%3.2lf/%3.2lf ms\n",
            to_ms(stats.min), get_avg(stats), to_ms(stats.max), get_mdev(stats));

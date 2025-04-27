@@ -35,6 +35,8 @@ typedef struct {
     long long acc2;
     unsigned long min;
     unsigned long max;
+    struct timeval start;
+    struct timeval end;
 } Stats;
 
 void parse_params(Params *params, char **argv, int argc);

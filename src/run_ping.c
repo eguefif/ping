@@ -20,16 +20,20 @@ boolean handle_response(int sockfd);
 void signalHandler();
 
 void run_ping(Params params) {
-    int sockfd = init_socket();
     int seq = 1;
     Stats stats;
     struct timeval before, after;
     unsigned long elapsed = 0;
     boolean success = true;
+    int sockfd = init_socket();
 
     bzero(&stats, sizeof(Stats));
     signal(SIGINT, signalHandler);
 
+    if (gettimeofday(&stats.start, NULL) != 0) {
+        fprintf(stderr, "Error: impossible to get time\n");
+        exit(EXIT_FAILURE);
+    }
     while (running) {
         usleep(PING_RATE);
         if (gettimeofday(&before, NULL) != 0) {
@@ -52,6 +56,10 @@ void run_ping(Params params) {
         }
         gather_statistics(&stats, elapsed, success);
         seq++;
+    }
+    if (gettimeofday(&stats.end, NULL) != 0) {
+        fprintf(stderr, "Error: impossible to get time\n");
+        exit(EXIT_FAILURE);
     }
     display_stat(&params, stats);
 }
@@ -138,6 +146,7 @@ boolean handle_response(int sockfd) {
         if (icmp->type == 0 && icmp->code == 0) {
             return true;
         } else {
+            printf("type: %d, code: %d\n", icmp->type, icmp->code);
             return false;
         }
     } else {
