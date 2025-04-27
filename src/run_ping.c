@@ -3,6 +3,7 @@
 #define RECV_TIMEOUT 1
 #define BUFF_SIZE 1000
 #define PING_SIZE 64
+#define TTL 64
 
 typedef struct {
     struct icmphdr header;
@@ -13,19 +14,19 @@ uint16_t calculate_checksum(void *packet);
 Packet init_packet(int seq);
 int init_socket();
 void print_buffer(char *buffer, int n);
-void send_ping(int sockfd, struct sockaddr_in addr, int seq);
+void send_ping(int sockfd, struct sockaddr *addr, int seq);
 boolean handle_response(int sockfd);
-void display_ping_message(int seq);
+void display_ping_message(int seq, Params *params);
 
-void run_ping(struct sockaddr_in addr) {
+void run_ping(Params params) {
     int sockfd = init_socket();
     int seq = 1;
 
     while (true) {
         usleep(PING_RATE);
-        send_ping(sockfd, addr, seq);
+        send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
-            display_ping_message(seq);
+            display_ping_message(seq, &params);
         } else {
             fprintf(stderr, "Error: wrong response format\n");
         }
@@ -33,9 +34,9 @@ void run_ping(struct sockaddr_in addr) {
     }
 }
 
-void display_ping_message(int seq) {
-    printf("%d bytes from ADDR(addr): icmp_seq=%d, ttcl=64, time=%d ms\n", 64,
-           seq, 0);
+void display_ping_message(int seq, Params *params) {
+    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%d ms\n", 64,
+           params->host, params->ip, seq, TTL, 0);
 }
 
 int init_socket() {
@@ -47,7 +48,7 @@ int init_socket() {
         exit(EXIT_FAILURE);
     }
 
-    int ttl = 64;
+    int ttl = TTL;
     if (setsockopt(sockfd, SOL_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
         fprintf(stderr, "Error: impossible to set ttl for socket\n");
         exit(EXIT_FAILURE);
@@ -65,11 +66,11 @@ int init_socket() {
     return sockfd;
 }
 
-void send_ping(int sockfd, struct sockaddr_in addr, int seq) {
+void send_ping(int sockfd, struct sockaddr *addr, int seq) {
     Packet packet;
     packet = init_packet(seq);
-    if (sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
-               sizeof(addr)) == -1) {
+    if (sendto(sockfd, &packet, sizeof(Packet), 0, addr,
+               sizeof(struct sockaddr_in)) == -1) {
         fprintf(stderr, "Error: failed to send packet\n");
         exit(EXIT_FAILURE);
     }
@@ -82,11 +83,11 @@ Packet init_packet(int seq) {
     packet.header.type = ICMP_ECHO;
     packet.header.un.echo.id = getpid();
     packet.header.un.echo.sequence = seq;
-    packet.header.checksum = calculate_checksum(&packet);
 
     for (int i = 0; i < 10; i++) {
         packet.message[i] = (char)i + 33;
     }
+    packet.header.checksum = calculate_checksum(&packet);
 
     return packet;
 }

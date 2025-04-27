@@ -1,14 +1,15 @@
 #include "ping.h"
 
 void parse_target(char *target, Params *params);
+struct sockaddr_in get_sockaddrin_from_str(char *ip);
 boolean is_ip_addr(char *target);
 
-void parse_params(Params *params, int argc, char **argv) {
-    for (int i = 1; i < argc; i++) {
-        if (strncmp(argv[i], "-v", 2) == 0) {
+void parse_params(Params *params, char **argv, int argc) {
+    for (int i = 0; i < argc; i++) {
+        if (strncmp(argv[i], "-v", 2)) {
             params->verbose = true;
         } else {
-            parse_target(argv[i], params);
+            parse_target(argv[1], params);
         }
     }
 }
@@ -18,10 +19,13 @@ void parse_target(char *target, Params *params) {
     strncpy(check, target, strlen(target));
     if (is_ip_addr(check)) {
         params->ip = target;
-        params->target_type = IP;
+        params->addr = get_sockaddrin_from_str(target);
+        params->host =
+            reverse_resolve_dns((struct sockaddr *)&params->addr, target);
     } else {
         params->host = target;
-        params->target_type = HOST;
+        resolve_dns(params);
+        params->ip = inet_ntoa(params->addr.sin_addr);
     }
     free(check);
 }
@@ -41,4 +45,18 @@ boolean is_ip_addr(char *target) {
         return false;
     }
     return true;
+}
+
+struct sockaddr_in get_sockaddrin_from_str(char *ip) {
+    struct sockaddr_in addr;
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(0);
+
+    if (inet_pton(AF_INET, ip, &(addr.sin_addr)) != 1) {
+        fprintf(stderr, "Error: ip address wrong format %s", ip);
+        exit(EXIT_FAILURE);
+    }
+
+    return addr;
 }
