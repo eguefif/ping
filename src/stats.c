@@ -3,6 +3,8 @@
 void gather_statistics(Stats *stats, long double elapsed, boolean success) {
 
     stats->acc += (unsigned long)elapsed;
+    stats->acc += (unsigned long)elapsed * (unsigned long)elapsed;
+
     if (stats->min > elapsed || stats->min == 0) {
         stats->min = elapsed;
     }
@@ -16,11 +18,12 @@ void gather_statistics(Stats *stats, long double elapsed, boolean success) {
 }
 
 long double subtract_time(struct timeval after, struct timeval before) {
-    long double total_after;
-    long double total_before;
+    unsigned long total_after;
+    unsigned long total_before;
 
-    total_after = after.tv_sec * 1000 + (double)after.tv_usec / 1000;
-    total_before = before.tv_sec * 1000 + (double)before.tv_usec / 1000;
-
+    total_after = after.tv_sec * 1000000 + (unsigned long)after.tv_usec;
+    total_before = before.tv_sec * 1000000 + (unsigned long)before.tv_usec;
     return total_after - total_before;
 }
+
+double to_ms(unsigned long elapsed) { return (long double)elapsed / 1000; }

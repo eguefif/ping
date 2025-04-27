@@ -1,6 +1,7 @@
 #ifndef PING_H
 #include <arpa/inet.h>
 #include <errno.h>
+#include <math.h>
 #include <netdb.h>
 #include <netinet/ip_icmp.h>
 #include <signal.h>
@@ -30,9 +31,10 @@ typedef struct {
 typedef struct {
     int count;
     int success_count;
-    long double acc;
-    double min;
-    double max;
+    unsigned long acc;
+    unsigned long acc2;
+    int min;
+    int max;
 } Stats;
 
 void parse_params(Params *params, char **argv, int argc);
@@ -46,4 +48,5 @@ void display_unreachable(int seq, Params *params);
 
 long double subtract_time(struct timeval after, struct timeval before);
 void gather_statistics(Stats *stats, long double elapsed, boolean success);
+double to_ms(unsigned long elapsed);
 #endif

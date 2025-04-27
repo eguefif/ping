@@ -1,5 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -O2
+CFLAGS = -Wall -Wextra -O2 
+#LDFLAGS = -lm
 
 SRC_DIR := src
 SRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -11,7 +12,7 @@ all: $(TARGET)
 
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) -lm
 
 %.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
