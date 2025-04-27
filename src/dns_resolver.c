@@ -3,12 +3,14 @@
 struct addrinfo *get_addr_info(char *host);
 void display_result(struct addrinfo *result, char *host);
 
-void resolve_dns(Params *params) {
+struct sockaddr_in resolve_dns(Params *params) {
     struct addrinfo *result;
+    struct sockaddr_in addr;
 
     result = get_addr_info(params->host);
     display_result(result, params->host);
-    params->dns_result = result;
+    memcpy(&addr, result->ai_addr, sizeof(addr));
+    return addr;
 }
 
 struct addrinfo *get_addr_info(char *host) {
