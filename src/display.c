@@ -3,7 +3,7 @@
 double get_avg(Stats stats);
 double get_mdev(Stats stats);
 
-void display_ping_message(int seq, Params *params, double elapsed) {
+void display_ping_message(int seq, Params *params, unsigned long elapsed) {
     printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%2.lf ms\n", 64,
            params->host, params->ip, seq, TTL, to_ms(elapsed));
 }
@@ -25,7 +25,9 @@ void display_stat(Params *params, Stats stats) {
            to_ms(stats.min), get_avg(stats), to_ms(stats.max), get_mdev(stats));
 }
 
-double get_avg(Stats stats) { return stats.acc / (double)stats.success_count; }
+double get_avg(Stats stats) {
+    return to_ms(stats.acc) / (double)stats.success_count;
+}
 
 double get_mdev(Stats stats) {
     double t1 = to_ms(stats.acc) / (double)stats.count;

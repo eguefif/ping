@@ -1,9 +1,9 @@
 #include "ping.h"
 
-void gather_statistics(Stats *stats, long double elapsed, boolean success) {
+void gather_statistics(Stats *stats, unsigned long elapsed, boolean success) {
 
-    stats->acc += (unsigned long)elapsed;
-    stats->acc += (unsigned long)elapsed * (unsigned long)elapsed;
+    stats->acc += elapsed;
+    stats->acc2 += elapsed * elapsed;
 
     if (stats->min > elapsed || stats->min == 0) {
         stats->min = elapsed;
@@ -17,7 +17,7 @@ void gather_statistics(Stats *stats, long double elapsed, boolean success) {
     }
 }
 
-long double subtract_time(struct timeval after, struct timeval before) {
+unsigned long subtract_time(struct timeval after, struct timeval before) {
     unsigned long total_after;
     unsigned long total_before;
 

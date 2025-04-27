@@ -33,8 +33,8 @@ typedef struct {
     int success_count;
     unsigned long acc;
     unsigned long acc2;
-    int min;
-    int max;
+    unsigned long min;
+    unsigned long max;
 } Stats;
 
 void parse_params(Params *params, char **argv, int argc);
@@ -42,11 +42,11 @@ void resolve_dns(Params *params);
 void run_ping(Params params);
 char *reverse_resolve_dns(struct sockaddr *addr, char *ip);
 
-void display_ping_message(int eq, Params *params, double elapsed);
+void display_ping_message(int eq, Params *params, unsigned long elapsed);
 void display_stat(Params *params, Stats stats);
 void display_unreachable(int seq, Params *params);
 
-long double subtract_time(struct timeval after, struct timeval before);
-void gather_statistics(Stats *stats, long double elapsed, boolean success);
+unsigned long subtract_time(struct timeval after, struct timeval before);
+void gather_statistics(Stats *stats, unsigned long elapsed, boolean success);
 double to_ms(unsigned long elapsed);
 #endif

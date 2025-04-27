@@ -24,7 +24,7 @@ void run_ping(Params params) {
     int seq = 1;
     Stats stats;
     struct timeval before, after;
-    long double elapsed = 0;
+    unsigned long elapsed = 0;
     boolean success = true;
 
     bzero(&stats, sizeof(Stats));
