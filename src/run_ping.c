@@ -3,7 +3,8 @@
 #define RECV_TIMEOUT 1
 #define BUFF_SIZE 1000
 #define PING_SIZE 64
-#define TTL 64
+
+boolean running = true;
 
 typedef struct {
     struct icmphdr header;
@@ -16,28 +17,54 @@ int init_socket();
 void print_buffer(char *buffer, int n);
 void send_ping(int sockfd, struct sockaddr *addr, int seq);
 boolean handle_response(int sockfd);
-void display_ping_message(int seq, Params *params);
+void signalHandler();
 
 void run_ping(Params params) {
-    int sockfd = init_socket();
     int seq = 1;
+    Stats stats;
+    struct timeval before, after;
+    unsigned long elapsed = 0;
+    boolean success = true;
+    int sockfd = init_socket();
 
-    while (true) {
+    bzero(&stats, sizeof(Stats));
+    signal(SIGINT, signalHandler);
+
+    if (gettimeofday(&stats.start, NULL) != 0) {
+        fprintf(stderr, "Error: impossible to get time\n");
+        exit(EXIT_FAILURE);
+    }
+    while (running) {
         usleep(PING_RATE);
+        if (gettimeofday(&before, NULL) != 0) {
+            fprintf(stderr, "Error: impossible to get time\n");
+            exit(EXIT_FAILURE);
+        }
         send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
-            display_ping_message(seq, &params);
+            if (gettimeofday(&after, NULL) != 0) {
+                fprintf(stderr, "Error: impossible to get time: %s\n",
+                        strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+            elapsed = subtract_time(after, before);
+            display_ping_message(seq, &params, elapsed);
+            success = true;
         } else {
-            fprintf(stderr, "Error: wrong response format\n");
+            success = false;
+            display_unreachable(seq, &params);
         }
+        gather_statistics(&stats, elapsed, success);
         seq++;
     }
+    if (gettimeofday(&stats.end, NULL) != 0) {
+        fprintf(stderr, "Error: impossible to get time\n");
+        exit(EXIT_FAILURE);
+    }
+    display_stat(&params, stats);
 }
 
-void display_ping_message(int seq, Params *params) {
-    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%d ms\n", 64,
-           params->host, params->ip, seq, TTL, 0);
-}
+void signalHandler() { running = false; }
 
 int init_socket() {
     struct timeval timeout;
@@ -119,6 +146,7 @@ boolean handle_response(int sockfd) {
         if (icmp->type == 0 && icmp->code == 0) {
             return true;
         } else {
+            printf("type: %d, code: %d\n", icmp->type, icmp->code);
             return false;
         }
     } else {
