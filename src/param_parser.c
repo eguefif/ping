@@ -3,14 +3,8 @@
 void parse_target(char *target, Params *params);
 boolean is_ip_addr(char *target);
 
-void parse_params(Params *params, int argc, char **argv) {
-    for (int i = 1; i < argc; i++) {
-        if (strncmp(argv[i], "-v", 2) == 0) {
-            params->verbose = true;
-        } else {
-            parse_target(argv[i], params);
-        }
-    }
+void parse_params(Params *params, char **argv) {
+    parse_target(argv[1], params);
 }
 
 void parse_target(char *target, Params *params) {
@@ -18,10 +12,8 @@ void parse_target(char *target, Params *params) {
     strncpy(check, target, strlen(target));
     if (is_ip_addr(check)) {
         params->ip = target;
-        params->target_type = IP;
     } else {
         params->host = target;
-        params->target_type = HOST;
     }
     free(check);
 }

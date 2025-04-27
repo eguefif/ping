@@ -3,18 +3,12 @@
 struct sockaddr_in get_sockaddrin_from_str(char *ip);
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
+    if (argc != 2) {
         printf("Usage: ping [-v] host/ip");
     }
     Params params;
-    struct sockaddr_in addr;
-    parse_params(&params, argc, argv);
-    if (params.target_type == HOST) {
-        addr = resolve_dns(&params);
-    } else {
-        addr = get_sockaddrin_from_str(params.ip);
-    }
-    run_ping(addr);
+    parse_params(&params, argv);
+    run_ping(params);
 }
 
 struct sockaddr_in get_sockaddrin_from_str(char *ip) {

@@ -13,17 +13,17 @@ uint16_t calculate_checksum(void *packet);
 Packet init_packet(int seq);
 int init_socket();
 void print_buffer(char *buffer, int n);
-void send_ping(int sockfd, struct sockaddr_in addr, int seq);
+void send_ping(int sockfd, struct sockaddr *addr, int seq);
 boolean handle_response(int sockfd);
 void display_ping_message(int seq);
 
-void run_ping(struct sockaddr_in addr) {
+void run_ping(Params params) {
     int sockfd = init_socket();
     int seq = 1;
 
     while (true) {
         usleep(PING_RATE);
-        send_ping(sockfd, addr, seq);
+        send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
             display_ping_message(seq);
         } else {
@@ -65,11 +65,11 @@ int init_socket() {
     return sockfd;
 }
 
-void send_ping(int sockfd, struct sockaddr_in addr, int seq) {
+void send_ping(int sockfd, struct sockaddr *addr, int seq) {
     Packet packet;
     packet = init_packet(seq);
-    if (sendto(sockfd, &packet, sizeof(Packet), 0, (struct sockaddr *)&addr,
-               sizeof(addr)) == -1) {
+    if (sendto(sockfd, &packet, sizeof(Packet), 0, addr,
+               sizeof(struct sockaddr)) == -1) {
         fprintf(stderr, "Error: failed to send packet\n");
         exit(EXIT_FAILURE);
     }
