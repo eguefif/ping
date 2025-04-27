@@ -5,11 +5,11 @@ struct sockaddr_in get_sockaddrin_from_str(char *ip);
 boolean is_ip_addr(char *target);
 
 void parse_params(Params *params, char **argv, int argc) {
-    for (int i = 0; i < argc; i++) {
-        if (strncmp(argv[i], "-v", 2)) {
+    for (int i = 1; i < argc; i++) {
+        if (strncmp(argv[i], "-v", 2) == 0) {
             params->verbose = true;
         } else {
-            parse_target(argv[1], params);
+            parse_target(argv[i], params);
         }
     }
 }

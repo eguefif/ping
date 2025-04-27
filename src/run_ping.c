@@ -3,7 +3,8 @@
 #define RECV_TIMEOUT 1
 #define BUFF_SIZE 1000
 #define PING_SIZE 64
-#define TTL 64
+
+boolean running = true;
 
 typedef struct {
     struct icmphdr header;
@@ -16,13 +17,15 @@ int init_socket();
 void print_buffer(char *buffer, int n);
 void send_ping(int sockfd, struct sockaddr *addr, int seq);
 boolean handle_response(int sockfd);
-void display_ping_message(int seq, Params *params);
+void signalHandler();
 
 void run_ping(Params params) {
     int sockfd = init_socket();
     int seq = 1;
 
-    while (true) {
+    signal(SIGINT, signalHandler);
+
+    while (running) {
         usleep(PING_RATE);
         send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
         if (handle_response(sockfd)) {
@@ -32,12 +35,10 @@ void run_ping(Params params) {
         }
         seq++;
     }
+    display_stat(&params);
 }
 
-void display_ping_message(int seq, Params *params) {
-    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%d ms\n", 64,
-           params->host, params->ip, seq, TTL, 0);
-}
+void signalHandler() { running = false; }
 
 int init_socket() {
     struct timeval timeout;
