@@ -4,25 +4,29 @@ void parse_target(char *target, Params *params);
 struct sockaddr_in get_sockaddrin_from_str(char *ip);
 boolean is_ip_addr(char *target);
 
-void parse_params(Params *params, char **argv) {
-    parse_target(argv[1], params);
+void parse_params(Params *params, char **argv, int argc) {
+    for (int i = 0; i < argc; i++) {
+        if (strncmp(argv[i], "-v", 2)) {
+            params->verbose = true;
+        } else {
+            parse_target(argv[1], params);
+        }
+    }
 }
 
 void parse_target(char *target, Params *params) {
     char *check = malloc(sizeof(char) * strlen(target));
     strncpy(check, target, strlen(target));
     if (is_ip_addr(check)) {
-        printf("test\n");
         params->ip = target;
         params->addr = get_sockaddrin_from_str(target);
         params->host =
             reverse_resolve_dns((struct sockaddr *)&params->addr, target);
     } else {
         params->host = target;
-        params->addr = resolve_dns(params);
+        resolve_dns(params);
         params->ip = inet_ntoa(params->addr.sin_addr);
     }
-    printf("ip: %s, host: %s\n", params->ip, params->host);
     free(check);
 }
 

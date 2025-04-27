@@ -3,6 +3,7 @@
 #define RECV_TIMEOUT 1
 #define BUFF_SIZE 1000
 #define PING_SIZE 64
+#define TTL 64
 
 typedef struct {
     struct icmphdr header;
@@ -34,8 +35,8 @@ void run_ping(Params params) {
 }
 
 void display_ping_message(int seq, Params *params) {
-    printf("%d bytes from %s(%s): icmp_seq=%d, ttcl=64, time=%d ms\n", 64,
-           params->host, params->ip, seq, 0);
+    printf("%d bytes from %s(%s): icmp_seq=%d, ttl=%d, time=%d ms\n", 64,
+           params->host, params->ip, seq, TTL, 0);
 }
 
 int init_socket() {
@@ -47,7 +48,7 @@ int init_socket() {
         exit(EXIT_FAILURE);
     }
 
-    int ttl = 64;
+    int ttl = TTL;
     if (setsockopt(sockfd, SOL_IP, IP_TTL, &ttl, sizeof(ttl)) != 0) {
         fprintf(stderr, "Error: impossible to set ttl for socket\n");
         exit(EXIT_FAILURE);
@@ -69,7 +70,7 @@ void send_ping(int sockfd, struct sockaddr *addr, int seq) {
     Packet packet;
     packet = init_packet(seq);
     if (sendto(sockfd, &packet, sizeof(Packet), 0, addr,
-               sizeof(struct sockaddr)) == -1) {
+               sizeof(struct sockaddr_in)) == -1) {
         fprintf(stderr, "Error: failed to send packet\n");
         exit(EXIT_FAILURE);
     }
@@ -82,11 +83,11 @@ Packet init_packet(int seq) {
     packet.header.type = ICMP_ECHO;
     packet.header.un.echo.id = getpid();
     packet.header.un.echo.sequence = seq;
-    packet.header.checksum = calculate_checksum(&packet);
 
     for (int i = 0; i < 10; i++) {
         packet.message[i] = (char)i + 33;
     }
+    packet.header.checksum = calculate_checksum(&packet);
 
     return packet;
 }

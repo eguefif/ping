@@ -2,14 +2,12 @@
 
 struct addrinfo *get_addr_info(char *host);
 
-struct sockaddr_in resolve_dns(Params *params) {
+void resolve_dns(Params *params) {
     struct addrinfo *result;
-    struct sockaddr_in addr;
 
     result = get_addr_info(params->host);
-    memcpy(&addr, result->ai_addr, sizeof(addr));
+    memcpy(&params->addr, result->ai_addr, sizeof(struct sockaddr));
     freeaddrinfo(result);
-    return addr;
 }
 
 struct addrinfo *get_addr_info(char *host) {
@@ -20,6 +18,8 @@ struct addrinfo *get_addr_info(char *host) {
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_RAW;
+    hints.ai_protocol = IPPROTO_ICMP;
+    hints.ai_flags = 0;
     if ((error = getaddrinfo(host, NULL, &hints, &result)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error));
         exit(EXIT_FAILURE);
