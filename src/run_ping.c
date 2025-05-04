@@ -2,21 +2,14 @@
 #define PING_RATE 1000000
 #define RECV_TIMEOUT 1
 #define BUFF_SIZE 1000
-#define PING_SIZE 64
 
 boolean running = true;
 
-typedef struct {
-    struct icmphdr header;
-    char message[PING_SIZE - sizeof(struct icmphdr)];
-} Packet;
-
-uint16_t calculate_checksum(void *packet);
 Packet init_packet(int seq);
 int init_socket();
 void print_buffer(char *buffer, int n);
 void send_ping(int sockfd, struct sockaddr *addr, int seq);
-boolean handle_response(int sockfd);
+boolean handle_response(int sockfd, int seq);
 void signalHandler();
 
 void run_ping(Params params) {
@@ -41,7 +34,7 @@ void run_ping(Params params) {
             exit(EXIT_FAILURE);
         }
         send_ping(sockfd, (struct sockaddr *)&params.addr, seq);
-        if (handle_response(sockfd)) {
+        if (handle_response(sockfd, seq)) {
             if (gettimeofday(&after, NULL) != 0) {
                 fprintf(stderr, "Error: impossible to get time: %s\n",
                         strerror(errno));
@@ -119,36 +112,12 @@ Packet init_packet(int seq) {
     return packet;
 }
 
-uint16_t calculate_checksum(void *packet) {
-    uint16_t *buffer = packet;
-    uint16_t sum = 0;
-    int max = sizeof(Packet);
-
-    for (int i = 0; i < max; i += 2)
-        sum += *buffer++;
-    if (max % 2 != 0) {
-        sum += *(unsigned char *)buffer;
-    }
-
-    sum = (sum >> 16) + (sum & 0xFFFF);
-    sum += (sum >> 16);
-
-    return ~sum;
-}
-
-boolean handle_response(int sockfd) {
+boolean handle_response(int sockfd, int seq) {
     char buffer[BUFF_SIZE];
 
     int n = recv(sockfd, buffer, BUFF_SIZE, 0);
     if (n > 1) {
-        struct iphdr *ip = (struct iphdr *)buffer;
-        struct icmphdr *icmp = (struct icmphdr *)(buffer + ip->ihl * 4);
-        if (icmp->type == 0 && icmp->code == 0) {
-            return true;
-        } else {
-            printf("type: %d, code: %d\n", icmp->type, icmp->code);
-            return false;
-        }
+        return check_response(buffer, seq) ? true : false;
     } else {
         fprintf(stderr, "Ping timeout\n");
     }
