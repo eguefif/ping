@@ -17,8 +17,14 @@
 #define false 0
 #define EXIT_FAILURE 1
 #define TTL 64
+#define PING_SIZE 64
 
 typedef int boolean;
+
+typedef struct {
+    struct icmphdr header;
+    char message[PING_SIZE - sizeof(struct icmphdr)];
+} Packet;
 
 typedef struct {
     char *target;
@@ -51,4 +57,7 @@ void display_unreachable(int seq, Params *params);
 unsigned long subtract_time(struct timeval after, struct timeval before);
 void gather_statistics(Stats *stats, unsigned long elapsed, boolean success);
 double to_ms(unsigned long elapsed);
+
+boolean check_response(char *buffer, int seq);
+uint16_t calculate_checksum(void *packet);
 #endif
